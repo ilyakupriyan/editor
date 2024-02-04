@@ -16,6 +16,7 @@
 /* *** Data *** */
 
 struct editorConfig {
+    int cx, cy;
     int screen_rows;
     int screen_cols;
     struct termios orig_termios;
@@ -190,6 +191,9 @@ void editorProccessKeypress()
 /* *** Init *** */
 
 void initEditor() {
+    E.cx = 0;
+    E.cy = 0;
+
     if (getWindowSize(&E.screen_rows, &E.screen_cols) == -1) die("getWindowSize");
 }
 
