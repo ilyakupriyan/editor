@@ -10,6 +10,7 @@
 #include <stdlib.h>
 
 /* *** Defines *** */
+#define EDITOR_VERSION "0.0.1"
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 /* *** Data *** */
@@ -131,7 +132,22 @@ void editorDrawRows(struct abuf_s *bf)
     int y;
 
     for (y = 0; y < E.screen_rows; y++) {
-        abAppend(bf, "~", 1);
+        if (y == E.screen_cols / 3) {
+            char welcome[80];
+            int welcome_len = snprintf(welcome, sizeof(welcome), "Welcome to Kupriyan-editor -- version %s", EDITOR_VERSION);
+            if (welcome_len > E.screen_cols) welcome_len = E.screen_cols;
+            
+            int padding = (E.screen_cols - welcome_len) / 2;
+            if (padding) {
+                abAppend(bf, "~", 1);
+                padding--;
+            }
+            while (padding) abAppend(bf, " ", 1);
+
+            abAppend(bf, welcome, welcome_len);
+        } else {
+            abAppend(bf, "~", 1);
+        }
 
         abAppend(bf, "\x1b[K", 3);
         if (y < E.screen_rows - 1)
