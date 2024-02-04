@@ -101,14 +101,14 @@ int getWindowSize(int *rows, int *cols)
 
 /* *** Appending buffer *** */
 
-struct abuf {
+struct abuf_s {
     char *b;
     int len
 };
 
 #define ABUF_INIT {NULL, 0};
 
-void abAppend(struct abuf *ab, const char *s, int len)
+void abAppend(struct abuf_s *ab, const char *s, int len)
 {
     char *new = realloc(ab->b, ab->len + len);
 
@@ -119,32 +119,37 @@ void abAppend(struct abuf *ab, const char *s, int len)
     ab->len += len;
 }
 
-void abFree(struct abuf *ab)
+void abFree(struct abuf_s *ab)
 {
     free(ab->b);
 }
 
 /* *** Output *** */
 
-void editorDrawRows()
+void editorDrawRows(struct abuf_s *bf)
 {
     int y;
 
     for (y = 0; y < E.screen_rows; y++) {
-        write (STDOUT_FILENO, "~", 1);
+        abAppend(bf, "~", 1);
         if (y < E.screen_rows - 1)
-            write(STDOUT_FILENO, "\r\n", 2);
+            abAppend(bf, "\r\n" , 2);
     }
 }
 
 void editorRefreshScreen()
 {
-    write(STDOUT_FILENO, "\x1b[2J", 4);
-    write(STDOUT_FILENO, "\x1b[H", 3);
+    struct abuf_s ab = ABUF_INIT;
 
-    editorDrawRows();
+    abAppend(&ab, "\x1b[2J", 4);
+    abAppend(&ab, "\x1b[H", 3);
 
-    write(STDOUT_FILENO, "\x1b[H", 3);
+    editorDrawRows(&ab);
+
+    abAppend(&ab, "\x1b[H", 3);
+
+    write(STDOUT_FILENO, ab.b, ab.len);
+    abFree(&ab);
 }
 
 /* *** Input *** */
