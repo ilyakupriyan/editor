@@ -106,7 +106,7 @@ struct abuf_s {
     int len
 };
 
-#define ABUF_INIT {NULL, 0};
+#define ABUF_INIT {NULL, 0}
 
 void abAppend(struct abuf_s *ab, const char *s, int len)
 {
@@ -132,6 +132,8 @@ void editorDrawRows(struct abuf_s *bf)
 
     for (y = 0; y < E.screen_rows; y++) {
         abAppend(bf, "~", 1);
+
+        abAppend(bf, "\x1b[K", 3);
         if (y < E.screen_rows - 1)
             abAppend(bf, "\r\n" , 2);
     }
@@ -141,12 +143,13 @@ void editorRefreshScreen()
 {
     struct abuf_s ab = ABUF_INIT;
 
-    abAppend(&ab, "\x1b[2J", 4);
+    abAppend(&ab, "\x1b[?25l", 6);
     abAppend(&ab, "\x1b[H", 3);
 
     editorDrawRows(&ab);
 
     abAppend(&ab, "\x1b[H", 3);
+    abAppend(&ab, "\x1b[?25h", 6);
 
     write(STDOUT_FILENO, ab.b, ab.len);
     abFree(&ab);
