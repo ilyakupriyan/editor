@@ -143,8 +143,7 @@ void editorDrawRows(struct abuf_s *bf)
                 abAppend(bf, "~", 1);
                 padding--;
             }
-            while (padding) abAppend(bf, " ", 1);
-
+            while (padding--) abAppend(bf, " ", 1);
             abAppend(bf, welcome, welcome_len);
         } else {
             abAppend(bf, "~", 1);
@@ -166,10 +165,9 @@ void editorRefreshScreen()
     editorDrawRows(&ab);
 
     char buf[32];
-    snprintf(buf, sizeof(buf), "\x1b[%d;%dH", E.cx + 1, E.cy + 1);
+    snprintf(buf, sizeof(buf), "\x1b[%d;%dH", E.cy + 1, E.cx + 1);
     abAppend(&ab, buf, strlen(buf));
 
-    abAppend(&ab, "\x1b[H", 3);
     abAppend(&ab, "\x1b[?25h", 6);
 
     write(STDOUT_FILENO, ab.b, ab.len);
@@ -177,6 +175,24 @@ void editorRefreshScreen()
 }
 
 /* *** Input *** */
+
+void editorMoveCursor(char key) 
+{
+    switch (key) {
+        case 'w':
+            E.cy--;
+            break;
+        case 'a':
+            E.cx--;
+            break;
+        case 's':
+            E.cy++;
+            break;
+        case 'd':
+            E.cx++;
+            break;
+    }
+}
 
 void editorProccessKeypress()
 {
@@ -186,8 +202,14 @@ void editorProccessKeypress()
         case CTRL_KEY('q'):
             write(STDOUT_FILENO, "\x1b[2J", 4);
             write(STDOUT_FILENO, "\x1b[H", 3);
-
             exit(0);
+            break;
+
+        case 'a':
+        case 'w':
+        case 'd':
+        case 's':
+            editorMoveCursor(c);
             break;
     }
 }
