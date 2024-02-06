@@ -159,7 +159,7 @@ int getWindowSize(int *rows, int *cols)
 
 struct abuf_s {
     char *b;
-    int len
+    int len;
 };
 
 #define ABUF_INIT {NULL, 0}
@@ -265,6 +265,13 @@ void editorProccessKeypress()
             write(STDOUT_FILENO, "\x1b[2J", 4);
             write(STDOUT_FILENO, "\x1b[H", 3);
             exit(0);
+            break;
+
+        case HOME_KEY:
+            E.cx = 0;
+            break;
+        case END_KEY:
+            E.cx = E.screen_cols - 1;
             break;
 
         case PAGE_DOWN:
