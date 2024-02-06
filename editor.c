@@ -79,7 +79,7 @@ int editorReadKey()
         if (read(STDIN_FILENO, &seq[1], 1) != 1) return '\x1b';
 
         if (seq[0] == '[') {
-            if (seq[1] >= "0" && seq[1] <= "9") {
+            if (seq[1] >= '0' && seq[1] <= '9') {
                 if (read(STDIN_FILENO, &seq[2], 1) != 1) return '\x1b';
 
                 if (seq[2] == '~') {
@@ -89,7 +89,7 @@ int editorReadKey()
                     }
                 }
             } else {
-                
+
                 switch (seq[1]) {
                     case 'A': return ARROW_UP;
                     case 'B': return ARROW_DOWN;
@@ -253,6 +253,16 @@ void editorProccessKeypress()
             write(STDOUT_FILENO, "\x1b[H", 3);
             exit(0);
             break;
+
+        case PAGE_DOWN:
+        case PAGE_UP:
+            {
+                int times = E.screen_rows;
+                while (times--) {
+                    editorMoveCursor(c == PAGE_UP ? ARROW_UP : ARROW_DOWN);
+                }
+                break;
+            }
 
         case ARROW_LEFT:
         case ARROW_UP:
