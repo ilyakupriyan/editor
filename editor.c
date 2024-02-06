@@ -1,5 +1,9 @@
 /* *** Includes *** */
 
+#define _GNU_SOURCE
+#define _DEFAULT_SOURCE
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
@@ -168,18 +172,33 @@ int getWindowSize(int *rows, int *cols)
 
 /* *** file I/O *** */
 
-void editorOpen()
+void editorOpen(char *file_name)
 {
-    char *line = "Hello, world";
-    ssize_t line_len = 13;
+    FILE *fp = fopen(file_name, "r");
+    if (!fp) die("fopen");
+    
+    char *line = NULL;
+    size_t line_cap = 0;
+    ssize_t line_len;
 
-    E.row.size = line_len;
-    E.row.chars = malloc(line_len + 1);
+    line_len = getline(&line, &line_cap, fp);
 
-    memcpy(E.row.chars, line, line_len);
+    if (line_len != -1) {
+        while (line_len > 0 && 
+                (line[line_len -1] == '\n' || line[line_len - 1] == '\r'))
+                    line_len--;
 
-    E.row.chars[line_len] = '\0';
-    E.num_rows = 1;
+        E.row.size = line_len;
+        E.row.chars = malloc(line_len + 1);
+
+        memcpy(E.row.chars, line, line_len);
+
+        E.row.chars[line_len] = '\0';
+        E.num_rows = 1;
+    }
+
+    free(line);
+    fclose(fp);
 }
 
 /* *** Appending buffer *** */
@@ -215,7 +234,7 @@ void editorDrawRows(struct abuf_s *bf)
 
     for (y = 0; y < E.screen_rows; y++) {
         if (y >= E.num_rows) {
-            if (y == E.screen_rows / 3) {
+            if (E.num_rows == 0 && y == E.screen_rows / 3) {
                 char welcome[80];
                 int welcome_len = snprintf(welcome, sizeof(welcome), "Kupriyan-editor -- version %s", EDITOR_VERSION);
                 if (welcome_len > E.screen_cols) welcome_len = E.screen_cols;
@@ -336,11 +355,13 @@ void initEditor() {
     if (getWindowSize(&E.screen_rows, &E.screen_cols) == -1) die("getWindowSize");
 }
 
-int main(void) 
+int main(int argc, char *argv[]) 
 {
     enableRawMode();
     initEditor();
-    editorOpen();
+    if (argc >= 2) {
+        editorOper(argv[1]);
+    }
 
     while (1) {
         editorRefreshScreen();
