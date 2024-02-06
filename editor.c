@@ -214,20 +214,26 @@ void editorDrawRows(struct abuf_s *bf)
     int y;
 
     for (y = 0; y < E.screen_rows; y++) {
-        if (y == E.screen_rows / 3) {
-            char welcome[80];
-            int welcome_len = snprintf(welcome, sizeof(welcome), "Kupriyan-editor -- version %s", EDITOR_VERSION);
-            if (welcome_len > E.screen_cols) welcome_len = E.screen_cols;
-            
-            int padding = (E.screen_cols - welcome_len) / 2;
-            if (padding) {
+        if (y >= E.num_rows) {
+            if (y == E.screen_rows / 3) {
+                char welcome[80];
+                int welcome_len = snprintf(welcome, sizeof(welcome), "Kupriyan-editor -- version %s", EDITOR_VERSION);
+                if (welcome_len > E.screen_cols) welcome_len = E.screen_cols;
+                
+                int padding = (E.screen_cols - welcome_len) / 2;
+                if (padding) {
+                    abAppend(bf, "~", 1);
+                    padding--;
+                }
+                while (padding--) abAppend(bf, " ", 1);
+                abAppend(bf, welcome, welcome_len);
+            } else {
                 abAppend(bf, "~", 1);
-                padding--;
             }
-            while (padding--) abAppend(bf, " ", 1);
-            abAppend(bf, welcome, welcome_len);
         } else {
-            abAppend(bf, "~", 1);
+            int len = E.row.size;
+            if (len > E.screen_cols) len = E.screen_cols;
+            abAppend(bf, E.row.chars, len);
         }
 
         abAppend(bf, "\x1b[K", 3);
