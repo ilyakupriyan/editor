@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <sys/ioctl.h>
+#include <sys/types.h>
 #include <string.h>
 #include <unistd.h>
 #include <termios.h>
@@ -44,6 +45,7 @@ struct editorConfig {
 struct editorConfig E;
 
 /* *** Terminal *** */
+
 void die(const char *s)
 {
     write(STDOUT_FILENO, "\x1b[2J", 4);
@@ -162,6 +164,22 @@ int getWindowSize(int *rows, int *cols)
 
         return 0;
     }
+}
+
+/* *** file I/O *** */
+
+void editorOpen()
+{
+    char *line = "Hello, world";
+    ssize_t line_len = 13;
+
+    E.row.size = line_len;
+    E.row.chars = malloc(line_len + 1);
+
+    memcpy(E.row.chars, line, line_len);
+
+    E.row.chars[line_len] = '\0';
+    E.num_rows = 1;
 }
 
 /* *** Appending buffer *** */
@@ -316,6 +334,7 @@ int main(void)
 {
     enableRawMode();
     initEditor();
+    editorOpen();
 
     while (1) {
         editorRefreshScreen();
