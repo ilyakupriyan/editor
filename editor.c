@@ -118,7 +118,6 @@ int editorReadKey()
 					}
 				}
 			} else {
-
 				switch (seq[1]) {
 					case 'A': return ARROW_UP;
 					case 'B': return ARROW_DOWN;
@@ -295,6 +294,11 @@ void editorScroll()
 	if (E.cy < E.num_rows) {
 		E.render_cx = editorRowCxToRenderCx(&E.row[E.cy], E.cx);
 	}
+
+	if (E.cy < E.row_offset) {
+		E.row_offset = E.cy;
+	}
+
 	if (E.cy >= E.row_offset + E.screen_rows) {
 		E.row_offset = E.cy - E.screen_rows + 1;
 	}
@@ -431,12 +435,19 @@ void editorProccessKeypress()
 		case PAGE_DOWN:
 		case PAGE_UP:
 			{
+				if (c == PAGE_UP) {
+					E.cy = E.row_offset;
+				} else if (c == PAGE_DOWN) {
+					E.cy = E.row_offset + E.screen_rows - 1;
+					if (E.cy > E.num_rows) E.cy = E.num_rows;
+				}
+
 				int times = E.screen_rows;
 				while (times--) {
 					editorMoveCursor(c == PAGE_UP ? ARROW_UP : ARROW_DOWN);
 				}
-				break;
 			}
+			break;
 
 		case ARROW_LEFT:
 		case ARROW_UP:
