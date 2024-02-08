@@ -345,6 +345,12 @@ void editorMoveCursor(int key)
             }
             break;
     }
+
+    row = (E.cy >= E.num_rows) ? NULL : &E.row[E.cy];
+    int row_len = row ? row->size : 0;
+    if (E.cx > row_len) {
+        E.cx = row_len;
+    }
 }
 
 void editorProccessKeypress()
