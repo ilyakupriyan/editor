@@ -17,6 +17,8 @@
 /* *** Defines *** */
 
 #define EDITOR_VERSION "0.0.1"
+#define EDITOR_TAB_SIZE 4
+
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 enum editorKey {
@@ -35,7 +37,9 @@ enum editorKey {
 
 typedef struct editor_row_s {
     int size;
+    int render_size;
     char *chars;
+    char *render;
 } editor_row_t;
 
 struct editorConfig {
@@ -175,6 +179,31 @@ int getWindowSize(int *rows, int *cols)
 
 /* *** Row operations *** */
 
+void updateRenderRow(editor_row_t *row)
+{
+    int tabs = 0;
+    int j;
+    for (j = 0; j < row->size; j++) {
+        if (row->chars[j] == '\t') tabs++;
+    }
+
+    free (row->render);
+    row->render = malloc(row->size + tabs*(EDITOR_TAB_SIZE - 1) + 1);
+
+    int idx = 0;
+    for (j = 0; j < row->size; j++) {
+        if (row->chars[j] == '\t') {
+            row->render[idx++] = ' ';
+            while ((idx - j) % EDITOR_TAB_SIZE != 0) row->render[idx++] = ' ';
+        } else {
+            row->render[idx++] = row->chars[j];
+        }
+    }
+
+    row->render[idx] = '\0';
+    row->render_size = idx;
+}
+
 void editorAppendRow(char *s, size_t len)
 {
     E.row = realloc(E.row, sizeof(editor_row_t) * (E.num_rows + 1));
@@ -184,8 +213,13 @@ void editorAppendRow(char *s, size_t len)
     E.row[index_lrow].chars = malloc(len + 1);
 
     memcpy(E.row[index_lrow].chars, s, len);
-
     E.row[index_lrow].chars[len] = '\0';
+
+    E.row[index_lrow].render_size = 0;
+    E.row[index_lrow].render = NULL;
+
+    updateRenderRow(&E.row[index_lrow]);
+
     E.num_rows++;
 }
 
@@ -281,12 +315,12 @@ void editorDrawRows(struct abuf_s *bf)
                 abAppend(bf, "~", 1);
             }
         } else {
-            int len = E.row[file_row].size - E.col_offset;
+            int len = E.row[file_row].render_size - E.col_offset;
 
             if (len < 0) len = 0;
 
             if (len > E.screen_cols) len = E.screen_cols;
-            abAppend(bf, &E.row[file_row].chars[E.col_offset], len);
+            abAppend(bf, &E.row[file_row].render[E.col_offset], len);
         }
 
         abAppend(bf, "\x1b[K", 3);
@@ -413,6 +447,7 @@ int main(int argc, char *argv[])
 {
     enableRawMode();
     initEditor();
+    
     if (argc >= 2) {
         editorOpen(argv[1]);
     }
