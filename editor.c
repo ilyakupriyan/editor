@@ -242,6 +242,19 @@ void editorAppendRow(char *s, size_t len)
 	E.num_rows++;
 }
 
+void editorRawInsertChar(editor_row_t *row, int index, int character)
+{
+    if (index < 0 || index > row->size) index = row->size;
+    row->chars = (char *) realloc(row->chars, row->size + 2);
+
+    memmove(&row->chars[index + 1], &row->chars[index + 1], row->size - index + 1);
+
+    row->size++;
+    row->chars[index] = character;
+
+    updateRenderRow(row);
+}
+
 /* *** File I/O *** */
 
 void editorOpen(char *file_name)
