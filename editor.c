@@ -18,7 +18,7 @@
 
 /* *** Defines *** */
 
-#define EDITOR_VERSION "0.0.1"
+#define EDITOR_VERSION "0.1.0"
 #define EDITOR_TAB_SIZE 4
 
 #define CTRL_KEY(k) ((k) & 0x1f)
@@ -522,14 +522,14 @@ void editorProccessKeypress()
 /* *** Init *** */
 
 void initEditor() {
-	E.cx = 0;
-	E.cy = 0;
-	E.render_cx = 0;
-	E.row_offset = 0;
-	E.col_offset = 0;
-	E.num_rows = 0;
+    E.cx = 0;
+    E.cy = 0;
+    E.render_cx = 0;
+    E.row_offset = 0;
+    E.col_offset = 0;
+    E.num_rows = 0;
     E.file_name = NULL;
-	E.row = NULL;
+    E.row = NULL;
     E.status_msg[0] = '\0';
     E.status_msg_time = 0;
 
