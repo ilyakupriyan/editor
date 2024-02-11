@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <sys/types.h>
 #include <stdarg.h>
+#include <fcntl.h>
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
@@ -61,6 +62,10 @@ struct editorConfig {
 };
 
 struct editorConfig E;
+
+/* *** Prototypes *** */
+
+void editorSetStatusMessage(const char *fmt, ...);
 
 /* *** Terminal *** */
 
@@ -270,6 +275,27 @@ void editorInsertChar(int c)
 
 /* *** File I/O *** */
 
+char *editorRowsToString(int *buf_len)
+{
+    int total_len = 0;
+    int j;
+    for (j = 0; j < E.num_rows; j++) {
+        total_len += E.row[j].size + 1;
+    }
+    *buf_len = total_len;
+
+    char *buf = (char *) malloc(sizeof(char)*total_len);
+    char *ptr = buf;
+    for (j = 0; j < E.num_rows; j++) {
+        memcpy(ptr, E.row[j].chars, E.row[j].size);
+        ptr += E.row[j].size;
+        *ptr = '\n';
+        ptr++;
+    }
+
+    return buf;
+}
+
 void editorOpen(char *file_name)
 {
     free(E.file_name);
@@ -292,6 +318,31 @@ void editorOpen(char *file_name)
 
 	free(line);
 	fclose(fp);
+}
+
+void editorSave() 
+{
+    if (E.file_name = NULL) return;
+
+    int len;
+    char *buf = editorRowsToString(&len);
+
+    int fd = open(E.file_name, O_RDWR | O_CREAT, 0644);
+    if (fd != -1) {
+        if (ftruncate(fd, len) != -1) {
+            if (write(fd, buf, len) != -1) {
+                close(fd);
+                free(buf);
+
+                editorSetStatusMessage("%d bytes written to disk", len);
+                return;
+            }
+        }
+        close(fd);
+    }
+
+    free(buf);
+    editorSetStatusMessage("Can't save! I/O error: %s", strerror(errno));
 }
 
 /* *** Appending buffer *** */
@@ -514,6 +565,10 @@ void editorProccessKeypress()
 			exit(0);
 			break;
 
+        case CTRL_KEY('s'):
+            editorSave();
+            break;
+
 		case HOME_KEY:
 			E.cx = 0;
 			break;
@@ -591,7 +646,7 @@ int main(int argc, char *argv[])
 		editorOpen(argv[1]);
 	}
 
-    editorSetStatusMessage("HELP: Ctrl + Q = quit");
+    editorSetStatusMessage("HELP: Ctrl + S = Save | Ctrl + Q = quit");
 
 	while (1) {
 		editorRefreshScreen();
