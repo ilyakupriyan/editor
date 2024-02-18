@@ -21,6 +21,7 @@
 
 #define EDITOR_VERSION "0.1.0"
 #define EDITOR_TAB_SIZE 4
+#define EDIOTR_QUIT_TIMES 3
 
 #define CTRL_KEY(k) ((k) & 0x1f)
 
@@ -560,6 +561,7 @@ void editorMoveCursor(int key)
 
 void editorProccessKeypress()
 {
+    static int  quit_times = EDIOTR_QUIT_TIMES;
 	int c = editorReadKey();
 
 	switch(c) {
@@ -568,6 +570,12 @@ void editorProccessKeypress()
             break;
 
 		case CTRL_KEY('q'):
+            if (E.dirty && quit_times > 0) {
+                editorSetStatusMessage("WARNING!!! File has unsaved changes. ", 
+                                    "Press CTRL + Q %d more times for quit.", quit_times);
+                quit_times--;
+                return;
+            }
 			write(STDOUT_FILENO, "\x1b[2J", 4);
 			write(STDOUT_FILENO, "\x1b[H", 3);
 			exit(0);
@@ -624,6 +632,8 @@ void editorProccessKeypress()
             editorInsertChar(c);
             break;
 	}
+
+    quit_times = EDIOTR_QUIT_TIMES;;
 }
 
 /* *** Init *** */
