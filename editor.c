@@ -251,6 +251,22 @@ void editorAppendRow(char *s, size_t len)
     E.dirty++;
 }
 
+void editorFreeRow(editor_row_t *row)
+{
+    free(row->render);
+    free(row->chars);
+}
+
+void editorDelRow(int at)
+{
+    if (at < 0 || at >= E.num_rows) return;
+
+    editorFreeRow(&E.row[at]);
+    memmove(&E.row[at], &E.row[at + 1], sizeof(editor_row_t) * (E.num_rows - at - 1));
+    E.num_rows--;
+    E.dirty++;
+}
+
 void editorRowInsertChar(editor_row_t *row, int index, int character)
 {
     if (index < 0 || index > row->size) index = row->size;
@@ -266,13 +282,23 @@ void editorRowInsertChar(editor_row_t *row, int index, int character)
     E.dirty++;
 }
 
+void editorRowAppendString(editor_row_t *row, char *s, size_t len)
+{
+    row->chars = realloc(row->chars, row->size + len + 1);
+    memcpy(&row->chars[row->size], s, len);
+    row->size += len;
+    row->chars[row->size] = '\0';
+    updateRenderRow(row);
+    E.dirty++;
+}
+
 void editorRowDelChar(editor_row_t *row, int index_char)
 {
     if (index_char < 0 || index_char >= row->size) return;
 
     memmove(&row->chars[index_char], &row->chars[index_char + 1], row->size - index_char);
     row->size--;
-    editorUpdateRow(row);
+    updateRenderRow(row);
 
     E.dirty++;
 }
@@ -292,11 +318,17 @@ void editorInsertChar(int c)
 void editorDeleteChar()
 {
     if (E.cy == E.num_rows) return;
+    if (E.cx == 0 && E.cy == 0) return;
 
     editor_row_t *row = &E.row[E.cy];
     if (E.cx > 0) {
-        editorRowDelChar(row, E.cx);
+        editorRowDelChar(row, E.cx - 1);
         E.cx--;
+    } else {
+        E.cx = E.row[E.cy - 1].size;
+        editorRowAppendString(&E.row[E.cy - 1], row->chars, row->size);
+        editorDelRow(E.cy);
+        E.cy--;
     }
 }
 /* *** File I/O *** */
@@ -619,7 +651,7 @@ void editorProccessKeypress()
         case DEL_KEY:
         case CTRL_KEY('h'):
                 if (c == DEL_KEY) editorMoveCursor(ARROW_RIGHT);
-                editorDelChar();
+                editorDeleteChar();
             break;
 
 		case PAGE_DOWN:
