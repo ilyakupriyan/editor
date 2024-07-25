@@ -69,7 +69,7 @@ struct editorConfig E;
 
 void editorSetStatusMessage(const char *fmt, ...);
 void editorRefreshScreen();
-char *editorPrompt(char *prompt);
+char *editorPrompt(char *prompt, void (*callback)(char *, int));
 
 /* *** Terminal *** */
 
@@ -421,7 +421,7 @@ void editorOpen(char *file_name)
 void editorSave() 
 {
 	if (E.file_name == NULL) {
-		E.file_name = editorPrompt("Save as: %s (ESC to cancel)");
+		E.file_name = editorPrompt("Save as: %s (ESC to cancel)", NULL);
 		if (E.file_name == NULL) {
 			editorSetStatusMessage("Save aborted");
 			return;
@@ -452,10 +452,9 @@ void editorSave()
 
 /* *** Find *** */
 
-void editorFind()
+void editorFindCallback(char *query, int key)
 {
-	char *query = editorPrompt("Search: %s (Esc to cancel)");
-	if (query == NULL) {
+	if (key == '\r' || key == '\x1b') {
 		return;
 	}
 
@@ -469,6 +468,14 @@ void editorFind()
 			E.row_offset = E.num_rows;
 			break;
 		}
+	}
+}
+
+void editorFind()
+{
+	char *query = editorPrompt("Search: %s (Esc to cancel)", editorFindCallback);
+	if (query == NULL) {
+		return;
 	}
 
 	free(query);
@@ -640,7 +647,7 @@ void editorSetStatusMessage(const char *fmt, ...)
 
 /* *** Input *** */
 
-char *editorPrompt(char *prompt)
+char *editorPrompt(char *prompt, void (* callback)(char *, int))
 {
 	size_t buf_size = 128;
 	char *buf = malloc(buf_size);
@@ -659,11 +666,15 @@ char *editorPrompt(char *prompt)
 			if (buf_len != 0) buf[--buf_len] = '\0';
 		} else if (c == '\x1b') {
 			editorSetStatusMessage("");
+			if (callback) 
+				callback(buf, c);
 			free(buf);
 			return NULL;
 		} else if (c == '\r') {
 			if (buf_len != 0) {
 				editorSetStatusMessage("");
+				if (callback)
+					callback(buf, c);
 				return buf;
 			}
 		} else if (!iscntrl(c) && c < 128) {
@@ -674,6 +685,9 @@ char *editorPrompt(char *prompt)
 			buf[buf_len++] = c;
 			buf[buf_len] = '\0';
 		}
+
+		if (callback)
+			callback(buf, c);
 	}
 }
 
