@@ -473,12 +473,22 @@ void editorFindCallback(char *query, int key)
 
 void editorFind()
 {
+	int saved_cx = E.cx;
+	int saved_cy = E.cy;
+	int saved_colloff = E.col_offset;
+	int saved_rowoff = E.row_offset;
+
 	char *query = editorPrompt("Search: %s (Esc to cancel)", editorFindCallback);
-	if (query == NULL) {
-		return;
+	if (query) {
+		free(query);
+	} else {
+		E.cx = saved_cx;
+		E.cy = saved_cy;
+		E.col_offset = saved_colloff;
+		E.row_offset = saved_rowoff;
 	}
 
-	free(query);
+	
 }
 
 /* *** Appending buffer *** */
