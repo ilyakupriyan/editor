@@ -41,6 +41,8 @@ enum editorKey {
 enum editorHighlight {
 	HL_NORMAL = 0,
 	HL_COMMENT,
+	HL_KEYWORDS1,
+	HL_KEYWORDS2,
 	HL_STRING,
 	HL_NUMBER,
 	HL_MATCH
@@ -55,6 +57,7 @@ struct editorSyntax {
 	char *filetype;
 	char **filematch;
 	char *singleline_comment_start;
+	char **keywords;
 	int flags;
 };
 
@@ -88,12 +91,18 @@ struct editorConfig E;
 /* *** filetype *** */
 
 char *C_HL_extensions[] = { ".c", ".h", ".cpp", NULL };
+char *C_HL_keywords[] = {
+	"switch", "if", "while", "for", "break", "continue", "return", "else", "struct", "union", "typedef", "static", "enum", "class", "case",
+
+	"int|", "long|", "double|", "float|", "char|", "unsigned|", "signed|", "void|", NULL
+};
 
 struct editorSyntax HLDB [] = {
 	{
 		.filetype = "c",
 		.filematch = C_HL_extensions,
 		.singleline_comment_start = "//",
+		.keywords = C_HL_keywords,
 		.flags = HL_HIGHLIGHT_NUMBERS | HL_HIGHLIGHT_STRINGS
 	},
 };
@@ -241,6 +250,8 @@ void editorUpdateSyntax (editor_row_t *row)
 
 	if (E.syntax == NULL) return;
 
+	char **keywords = E.syntax->keywords;
+
 	char *scs = E.syntax->singleline_comment_start;
 	int scs_len = scs ? strlen(scs) : 0;
 
@@ -292,6 +303,27 @@ void editorUpdateSyntax (editor_row_t *row)
 			}
 		}
 
+		if (prev_sep) {
+			int j;
+			for (j = 0; keywords[j]; j++) {
+				int klen =strlen(keywords[j]);
+				int kw2 = keywords[j][klen - 1] == '|';
+				if (kw2) 
+					klen--;
+
+				if (strncmp(&row->render[i], keywords[j], klen) && 
+						is_separator(row->render[i + klen])) {
+					memset(&row->hl[i], kw2 ? HL_KEYWORDS1 : HL_KEYWORDS2, klen);
+					i += klen;
+					break;
+				}
+			}
+			if (keywords[j] != NULL) {
+				prev_sep = 0;
+				continue;
+			}
+		}
+
 		prev_sep =is_separator(c);
 		i++;	
 	}
@@ -302,6 +334,8 @@ int editorSyntaxToColor(int hl)
 	switch (hl) {
 		case HL_COMMENT: return 36;
 		case HL_STRING: return 35;
+		case HL_KEYWORDS1: return 33;
+		case HL_KEYWORDS2: return 32;
 		case HL_NUMBER: return 31;
 		case HL_MATCH: return 34;
 		default: return 37;
