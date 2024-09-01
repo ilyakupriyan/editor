@@ -92,6 +92,7 @@ struct editorConfig {
 };
 
 struct editorConfig E;
+int index_len = 0;
 
 /* *** filetype *** */
 
@@ -412,18 +413,23 @@ void editorSelectSyntaxHighlight ()
 
 /* *** Row operations *** */
 
+/*
+ * @brief		Переводит курсор из позиции в файле в позицию, изображаемую в терминале
+ * @param row	Указатель на строку
+ * @param cx	Расположение курсора в файле по оси х
+ * @return		Расположение курсора в терминале
+ */
 int editorRowCxToRx(editor_row_t *row, int cx) 
 {
-	int rx = 0;
+	int render_x = 0;
 	int j;
 	for (j = 0; j < cx; j++) {
 		if (row->chars[j] == '\t') {
-			rx += (EDITOR_TAB_SIZE - 1) - (rx % EDITOR_TAB_SIZE);
+			render_x += (EDITOR_TAB_SIZE - 1) - (render_x % EDITOR_TAB_SIZE);
 		}
-		rx++;
+		render_x++;
 	}
-	
-	return rx;
+	return render_x;
 }
 
 int editorRowRxToCx(editor_row_t *row, int rx) 
@@ -511,7 +517,7 @@ void editorDelRow(int at)
 
 	editorFreeRow(&E.row[at]);
 	memmove(&E.row[at], &E.row[at + 1], sizeof(editor_row_t) * (E.num_rows - at - 1));
-	for (int j = 0; j <= E.num_rows - 1; j++)
+	for (int j = at; j <= E.num_rows - 1; j++)
 		E.row[j].idx--;
 	E.num_rows--;
 	E.dirty++;
@@ -791,12 +797,16 @@ void abFree(struct abuf_s *ab)
 
 /* *** Output *** */
 
+/*
+ * @brief			Управляет отображением курсора в рендере и смещением в строках для рендера
+ * @return 			None
+ */
 void editorScroll()
 {
 	E.render_cx = 0;
 
 	if (E.cy < E.num_rows) {
-		E.render_cx = editorRowCxToRx(&E.row[E.cy], E.cx);
+		E.render_cx += editorRowCxToRx(&E.row[E.cy], E.cx);
 	}
 
 	if (E.cy < E.row_offset) {
@@ -806,12 +816,23 @@ void editorScroll()
 	if (E.cy >= E.row_offset + E.screen_rows) {
 		E.row_offset = E.cy - E.screen_rows + 1;
 	}
+
 	if (E.render_cx < E.col_offset) {
 		E.col_offset = E.render_cx;
 	}
-	if (E.render_cx >= E.col_offset + E.screen_cols) {
-		E.col_offset = E.render_cx - E.col_offset + 1;
+	if (E.render_cx >= E.col_offset + E.screen_cols - index_len) {
+		E.col_offset = E.render_cx - E.col_offset + 1 ;
 	}
+	E.render_cx += index_len;								//сдвигаем курсор на количество позиций, выделенных под номер строки
+}
+
+void editorDrawRowNumber(struct abuf_s *bf, editor_row_t *row)
+{
+	char index_row[10];
+
+	index_len = snprintf(index_row, sizeof(index_row), "%4d| ", row->idx);
+	abAppend(bf, index_row, index_len);
+
 }
 
 void editorDrawRows(struct abuf_s *bf)
@@ -840,20 +861,21 @@ void editorDrawRows(struct abuf_s *bf)
 				abAppend(bf, "~", 1);
 			}
 		} else {
+			editorDrawRowNumber(bf, &E.row[file_row]);
 			int len = E.row[file_row].render_size - E.col_offset;
 
 			if (len < 0) {
 				len = 0;
 			}
-			if (len > E.screen_cols) {
-				len = E.screen_cols;
+			if (len > E.screen_cols - index_len) {
+				len = E.screen_cols - index_len;
 			}
 			char *c = &E.row[file_row].render[E.col_offset];
 			unsigned char *hl = &E.row[file_row].hl[E.col_offset];
 			int current_color = -1;
 			int j;
 			for (j = 0; j < len; j++) {
-				if (iscntrl(j)) {
+				if (iscntrl(c[j])) {
 					char sym = (c[j] <= 26) ? '@' + c[j] : '?';
 					abAppend(bf, "\x1b[7m", 4);
 					abAppend(bf, &sym, 1);
