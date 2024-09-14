@@ -1,56 +1,8 @@
 /* *** Includes *** */
 
-#define _GNU_SOURCE
-#define _DEFAULT_SOURCE
-#define _GNU_SOURCE
-
-#include <stdio.h>
-#include <ctype.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <stdarg.h>
-#include <fcntl.h>
-#include <string.h>
-#include <unistd.h>
-#include <time.h>
-#include <termios.h>
-#include <stdlib.h>
-
-/* *** Defines *** */
-
-#define EDITOR_VERSION "0.1.0"
-#define EDITOR_TAB_SIZE 4
-#define EDIOTR_QUIT_TIMES 3
-
-#define CTRL_KEY(k) ((k) & 0x1f)
-
-enum editorKey {
-	BACKSPACE = 127,
-	ARROW_RIGHT = 1000,
-	ARROW_LEFT,
-	ARROW_UP,
-	ARROW_DOWN,
-	DEL_KEY,
-	PAGE_UP,
-	PAGE_DOWN,
-	HOME_KEY,
-	END_KEY
-};
-
-enum editorHighlight {
-	HL_NORMAL = 0,
-	HL_COMMENT,
-	HL_MLCOMMENT,
-	HL_KEYWORDS1,
-	HL_KEYWORDS2,
-	HL_STRING,
-	HL_NUMBER,
-	HL_MATCH
-};
-
-#define HL_HIGHLIGHT_NUMBERS (1 << 0)
-#define HL_HIGHLIGHT_STRINGS (1 << 1)
+#include "include/common.h"
+#include "include/input.h"
+#include "include/syntax_highlight.h"
 
 /* *** Data *** */
 
