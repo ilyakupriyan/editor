@@ -1,5 +1,5 @@
-#ifndef INPUT_H
-#define INPUT_H
+#ifndef IO_CTRL_H
+#define IO_CTRL_H
 
 #define CTRL_KEY(k) ((k) & 0x1f)
 

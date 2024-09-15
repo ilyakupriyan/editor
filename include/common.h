@@ -9,8 +9,6 @@
 #define EDITOR_TAB_SIZE 4
 #define EDIOTR_QUIT_TIMES 3
 
-#define CTRL_KEY(k) ((k) & 0x1f)
-
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
