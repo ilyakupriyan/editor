@@ -6,19 +6,11 @@
 #include "include/row_operations.h"
 #include "include/editor_operations.h"
 #include "include/file_io.h"
+#include "include/terminal.h"
 
 /* *** Data *** */
 
-
-
 struct editorConfig E;
-int index_len = 0;
-
-/* *** Prototypes *** */
-
-void editorSetStatusMessage(const char *fmt, ...);
-void editorRefreshScreen();
-char *editorPrompt(char *prompt, void (*callback)(char *, int));
 
 /* *** Terminal *** */
 

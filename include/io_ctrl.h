@@ -1,6 +1,8 @@
 #ifndef IO_CTRL_H
 #define IO_CTRL_H
 
+#include "common.h"
+
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 enum editorKey {
@@ -15,5 +17,7 @@ enum editorKey {
 	HOME_KEY,
 	END_KEY
 };
+
+int index_len = 0;
 
 #endif
