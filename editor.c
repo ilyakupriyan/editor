@@ -3,35 +3,13 @@
 #include "include/common.h"
 #include "include/io_ctrl.h"
 #include "include/syntax_highlight.h"
+#include "include/row_operations.h"
+#include "include/editor_operations.h"
+#include "include/file_io.h"
 
 /* *** Data *** */
 
-typedef struct editor_row_s {
-	int idx;
-	int size;
-	int render_size;
-	char *chars;
-	char *render;
-	unsigned char *hl;
-	int hl_open_comment;
-} editor_row_t;
 
-struct editorConfig {
-	int cx, cy;
-	int render_cx;
-	int row_offset;
-	int col_offset;
-	int screen_rows;
-	int screen_cols;
-	int dirty;
-	int num_rows;
-	char status_msg[80];
-	time_t status_msg_time;
-	editor_row_t *row;
-	char *file_name;
-	struct termios orig_termios;
-	struct editorSyntax *syntax;
-};
 
 struct editorConfig E;
 int index_len = 0;
